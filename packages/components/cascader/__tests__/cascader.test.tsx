@@ -818,6 +818,10 @@ describe('Cascader.vue', () => {
     await input.trigger('focus')
     expect(handleFocus).toHaveBeenCalledTimes(1)
     const tagCloseIcons = wrapper.findAll('.el-tag__close')
+    console.log(
+      document.querySelectorAll('.el-tag__close').length,
+      tagCloseIcons.length
+    )
     await tagCloseIcons[1].trigger('click')
     await tagCloseIcons[0].trigger('click')
     expect(handleFocus).toHaveBeenCalledTimes(1)

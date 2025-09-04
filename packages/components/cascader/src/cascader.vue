@@ -75,7 +75,7 @@
         >
           <slot name="tag" :data="allPresentTags" :delete-tag="deleteTag">
             <el-tag
-              v-for="tag in presentTags"
+              v-for="tag in presentTags.slice(0, maxCollapseTags)"
               :key="tag.key"
               :type="tagType"
               :size="tagSize"
@@ -88,50 +88,57 @@
               <template v-if="tag.isCollapseTag === false">
                 <span>{{ tag.text }}</span>
               </template>
-              <template v-else>
-                <el-tooltip
-                  ref="tagTooltipRef"
-                  :disabled="popperVisible || !collapseTagsTooltip"
-                  :fallback-placements="['bottom', 'top', 'right', 'left']"
-                  placement="bottom"
-                  :popper-class="popperClass"
-                  :popper-style="popperStyle"
-                  :effect="effect"
-                >
-                  <template #default>
-                    <span>{{ tag.text }}</span>
-                  </template>
-                  <template #content>
-                    <el-scrollbar :max-height="maxCollapseTagsTooltipHeight">
-                      <div :class="nsCascader.e('collapse-tags')">
-                        <div
-                          v-for="(tag2, idx) in allPresentTags.slice(
-                            maxCollapseTags
-                          )"
-                          :key="idx"
-                          :class="nsCascader.e('collapse-tag')"
-                        >
-                          <el-tag
-                            :key="tag2.key"
-                            class="in-tooltip"
-                            :type="tagType"
-                            :size="tagSize"
-                            :effect="tagEffect"
-                            :hit="tag2.hitState"
-                            :closable="tag2.closable"
-                            disable-transitions
-                            @close="deleteTag(tag2)"
-                          >
-                            <span>{{ tag2.text }}</span>
-                          </el-tag>
-                        </div>
-                      </div>
-                    </el-scrollbar>
-                  </template>
-                </el-tooltip>
-              </template>
             </el-tag>
           </slot>
+          <el-tooltip
+            v-if="collapseTags && allPresentTags.length > maxCollapseTags"
+            ref="tagTooltipRef"
+            :disabled="popperVisible || !collapseTagsTooltip"
+            :fallback-placements="['bottom', 'top', 'right', 'left']"
+            placement="bottom"
+            :popper-class="popperClass"
+            :popper-style="popperStyle"
+            :effect="effect"
+          >
+            <template #default>
+              <el-tag
+                :closable="false"
+                :size="tagSize"
+                :type="tagType"
+                :effect="tagEffect"
+                disable-transitions
+              >
+                <span :class="nsCascader.e('tags-text')">
+                  + {{ allPresentTags.length - maxCollapseTags }}
+                </span>
+              </el-tag>
+            </template>
+            <template #content>
+              <el-scrollbar :max-height="maxCollapseTagsTooltipHeight">
+                <div :class="nsCascader.e('collapse-tags')">
+                  <div
+                    v-for="(tag, idx) in allPresentTags.slice(maxCollapseTags)"
+                    :key="idx"
+                    :class="nsCascader.e('collapse-tag')"
+                  >
+                    <el-tag
+                      :key="tag.key"
+                      class="in-tooltip"
+                      :type="tagType"
+                      :size="tagSize"
+                      :effect="tagEffect"
+                      :hit="tag.hitState"
+                      :closable="tag.closable"
+                      disable-transitions
+                      @close="deleteTag(tag)"
+                    >
+                      <span>{{ tag.text }}</span>
+                    </el-tag>
+                  </div>
+                </div>
+              </el-scrollbar>
+            </template>
+          </el-tooltip>
           <input
             v-if="filterable && !isDisabled"
             v-model="searchInputValue"
@@ -304,8 +311,7 @@ const { isComposing, handleComposition } = useComposition({
 })
 
 const tooltipRef: Ref<TooltipInstance | null> = ref(null)
-//TODO: transform [TooltipInstance] to TooltipInstance
-const tagTooltipRef = ref<[TooltipInstance]>()
+const tagTooltipRef = ref<TooltipInstance>()
 const inputRef = ref<InputInstance>()
 const tagWrapper = ref(null)
 const cascaderPanelRef: Ref<CascaderPanelInstance | null> = ref(null)
@@ -349,7 +355,7 @@ const { wrapperRef, isFocused, handleBlur } = useFocusController(inputRef, {
   beforeBlur(event) {
     return (
       tooltipRef.value?.isFocusInsideContent(event) ||
-      tagTooltipRef.value?.[0]?.isFocusInsideContent(event)
+      tagTooltipRef.value?.isFocusInsideContent(event)
     )
   },
   afterBlur() {
