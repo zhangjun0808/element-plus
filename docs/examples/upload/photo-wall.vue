@@ -5,6 +5,7 @@
     list-type="picture-card"
     :on-preview="handlePictureCardPreview"
     :on-remove="handleRemove"
+    multiple
   >
     <el-icon><Plus /></el-icon>
   </el-upload>
